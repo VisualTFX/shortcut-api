@@ -24,6 +24,7 @@ async def create_session(
     domain: str | None = None,
     alias_length: int | None = None,
     source_label: str | None = None,
+    device_name: str | None = None,
     metadata: dict | None = None,
 ) -> tuple[VerificationSession, str]:
     """
@@ -50,6 +51,7 @@ async def create_session(
         created_at=now,
         expires_at=expires_at,
         source_label=source_label,
+        device_name=device_name,
         metadata_=json.dumps(metadata) if metadata else None,
     )
     db.add(session)

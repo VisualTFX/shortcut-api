@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.logging import get_logger
+from app.integrations.discord.webhook import send_code_received_notification
 from app.models.incoming_message import IncomingMessage
 from app.models.parsing_rule import ParsingRule
 from app.models.verification_session import SessionStatus, VerificationSession
@@ -215,4 +216,14 @@ async def process_message(
 
     await db.commit()
     await db.refresh(msg)
+
+    # Fire Discord notification after a code is successfully extracted
+    if session and parse_result and parsed_code:
+        await send_code_received_notification(
+            device_name=session.device_name or "Unknown Device",
+            alias_address=session.alias_address,
+            code=parsed_code,
+            session_id=session.public_id,
+        )
+
     return msg

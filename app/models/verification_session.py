@@ -44,6 +44,7 @@ class VerificationSession(Base):
         DateTime(timezone=True), nullable=True
     )
     source_label: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    device_name: Mapped[str | None] = mapped_column(String(128), nullable=True)
     extracted_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
     extraction_confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
     matched_message_id: Mapped[str | None] = mapped_column(String(64), nullable=True)

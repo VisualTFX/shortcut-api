@@ -41,6 +41,7 @@ async def create_session(
         domain=body.domain,
         alias_length=body.alias_length,
         source_label=body.source_label,
+        device_name=body.device_name,
         metadata=body.metadata,
     )
     return SessionCreateResponse(
@@ -49,6 +50,7 @@ async def create_session(
         alias=session.alias_address,
         expires_at=session.expires_at,
         status=session.status,
+        device_name=session.device_name,
     )
 
 
@@ -69,6 +71,7 @@ async def get_session_status(
         last_checked_at=session.last_checked_at,
         code_found=session.extracted_code is not None,
         completed=session.status == SessionStatus.extracted,
+        device_name=session.device_name,
     )
 
 
