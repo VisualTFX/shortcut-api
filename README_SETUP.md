@@ -133,8 +133,8 @@ The table below explains **every variable**. Variables marked **Must Change** ne
 | `SESSION_TTL_SECONDS` | `600` | Optional | How long a session stays active (default: 10 minutes). Increase if users need more time. |
 | `ALIAS_TIMEOUT_MINUTES` | `5` | Optional | Minutes to wait for a verification code before auto-cancelling the alias and session. The session will still respond to polling with a cancellation message. |
 | `DATABASE_URL` | `sqlite+aiosqlite:///./shortcut_api.db` | Optional | SQLite is fine for personal use. See [Step 8](#step-8-optional-postgresql-instead-of-sqlite) for PostgreSQL. |
-| `GMAIL_CREDENTIALS_FILE` | `credentials.json` | Leave | Path to your downloaded Google OAuth credentials file. |
-| `GMAIL_TOKEN_FILE` | `token.json` | Leave | Path where the OAuth access token is saved after first login. |
+| `GMAIL_CREDENTIALS_FILE` | `credentials.json` | Leave | Path to your downloaded Google OAuth credentials file. Relative paths resolve from your current working directory (project root). |
+| `GMAIL_TOKEN_FILE` | `token.json` | Leave | Path where the OAuth access token is saved after first login. Relative paths resolve from your current working directory (project root). |
 | `GMAIL_MONITORED_LABEL` | `INBOX` | Optional | Gmail label to watch. `INBOX` monitors all incoming mail. |
 | `GMAIL_STRATEGY` | `polling` | Optional | `polling` checks Gmail on a timer. `watch` uses push notifications (requires Pub/Sub setup). |
 | `GMAIL_POLL_INTERVAL_SECONDS` | `10` | Optional | How often (seconds) to poll Gmail. 10 is a good default. |
@@ -240,11 +240,34 @@ The API needs permission to read your Gmail inbox. You grant this permission onc
 6. Rename the downloaded file to exactly **`credentials.json`**
 7. Move `credentials.json` into the root of the `shortcut-api` project folder (the same folder as `.env`)
 
-### 3e. Run the OAuth Setup Script
+### 3e. Place `credentials.json` in the Project Root
 
-With your virtual environment active and `credentials.json` in the project root:
+> **Both `credentials.json` and `token.json` must be in the project root directory — the same folder that contains `.env`, `requirements.txt`, and `pyproject.toml`.**
+
+The default `.env` values (`GMAIL_CREDENTIALS_FILE=credentials.json` and `GMAIL_TOKEN_FILE=token.json`) are **relative paths** that resolve from your **current working directory**. If you run the script from a different directory (e.g. inside `scripts/`), it will not find `credentials.json`.
+
+Expected file layout after completing this step:
+
+```
+shortcut-api/
+├── .env
+├── credentials.json    ← place here
+├── token.json          ← auto-created here after running gmail_auth.py
+├── requirements.txt
+├── pyproject.toml
+├── app/
+├── scripts/
+│   └── gmail_auth.py
+└── ...
+```
+
+### 3f. Run the OAuth Setup Script
+
+With your virtual environment active, **make sure you are in the project root** (`shortcut-api/`):
 
 ```powershell
+# Make sure you are in the project root (shortcut-api/) directory:
+cd C:\Users\YourName\shortcut-api
 python scripts/gmail_auth.py
 ```
 
@@ -913,6 +936,21 @@ python scripts/gmail_auth.py
 ```
 
 Follow the browser consent flow again. A new `token.json` will be created.
+
+### "credentials.json not found" error
+
+If `gmail_auth.py` prints an error like `Gmail credentials file not found: credentials.json`, check the following:
+
+1. **File placement** — `credentials.json` must be in the **project root** (`shortcut-api/`), the same folder as `.env`. It should **not** be inside `scripts/` or any other subdirectory.
+2. **Current working directory** — You must run the script **from the project root**, not from inside `scripts/`. The `.env` defaults (`GMAIL_CREDENTIALS_FILE=credentials.json`) are relative paths resolved from wherever you run the command:
+
+```powershell
+# Correct — run from the project root:
+cd C:\Users\YourName\shortcut-api
+python scripts/gmail_auth.py
+```
+
+3. **Custom path** — If you prefer to store the file elsewhere, set `GMAIL_CREDENTIALS_FILE` in your `.env` to an absolute path (e.g. `GMAIL_CREDENTIALS_FILE=C:\Users\YourName\credentials.json`).
 
 ### API not receiving emails from the correct alias
 
