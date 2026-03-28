@@ -33,6 +33,7 @@ async def create_session(
     Returns (session, raw_client_token).  The raw token is only returned here
     and is never persisted — only its hash is stored.
     """
+    device_name = device_name or "iPhone"
     settings = get_settings()
     alias = await generate_unique_alias(db, domain=domain, length=alias_length)
 
@@ -137,6 +138,40 @@ async def cancel_session(
     await db.refresh(session)
     logger.info("Cancelled session %s", public_id)
     return session
+
+
+async def timeout_stale_sessions(db: AsyncSession) -> int:
+    """Cancel sessions where no code was retrieved within the alias timeout window.
+
+    Returns the count of sessions timed out.
+    """
+    settings = get_settings()
+    now = datetime.now(timezone.utc)
+    cutoff = now - timedelta(minutes=settings.alias_timeout_minutes)
+    result = await db.scalars(
+        select(VerificationSession).where(
+            VerificationSession.status.in_(
+                [SessionStatus.waiting, SessionStatus.received]
+            ),
+            VerificationSession.created_at < cutoff,
+        )
+    )
+    sessions = result.all()
+    count = 0
+    for sess in sessions:
+        sess.status = SessionStatus.cancelled
+        sess.completed_at = now
+        sess.error_message = "Code not retrieved within timeout"
+        alias = await db.get(Alias, sess.alias_id)
+        if alias:
+            alias.status = AliasStatus.retired
+            alias.used_at = now
+            alias.retired_at = now
+        count += 1
+    if count:
+        await db.commit()
+        logger.info("Timed out %d sessions", count)
+    return count
 
 
 async def expire_old_sessions(db: AsyncSession) -> int:

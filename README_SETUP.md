@@ -131,6 +131,7 @@ The table below explains **every variable**. Variables marked **Must Change** ne
 | `ALIAS_PREFIX` | *(empty)* | Optional | Static prefix prepended to every alias, e.g. `sc-` → `sc-xk9mn2p4@yourdomain.com`. |
 | `ALIAS_SUFFIX` | *(empty)* | Optional | Static suffix appended to the random part (before `@`). |
 | `SESSION_TTL_SECONDS` | `600` | Optional | How long a session stays active (default: 10 minutes). Increase if users need more time. |
+| `ALIAS_TIMEOUT_MINUTES` | `5` | Optional | Minutes to wait for a verification code before auto-cancelling the alias and session. The session will still respond to polling with a cancellation message. |
 | `DATABASE_URL` | `sqlite+aiosqlite:///./shortcut_api.db` | Optional | SQLite is fine for personal use. See [Step 8](#step-8-optional-postgresql-instead-of-sqlite) for PostgreSQL. |
 | `GMAIL_CREDENTIALS_FILE` | `credentials.json` | Leave | Path to your downloaded Google OAuth credentials file. |
 | `GMAIL_TOKEN_FILE` | `token.json` | Leave | Path where the OAuth access token is saved after first login. |
@@ -169,6 +170,7 @@ ALIAS_PREFIX=
 ALIAS_SUFFIX=
 
 SESSION_TTL_SECONDS=600
+ALIAS_TIMEOUT_MINUTES=5
 
 DATABASE_URL=sqlite+aiosqlite:///./shortcut_api.db
 

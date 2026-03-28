@@ -10,8 +10,8 @@ from app.core.logging import get_logger
 
 logger = get_logger(__name__)
 
-# #2ecc71 as a decimal integer
-_EMBED_COLOR = 0x2ECC71
+# #000000 as a decimal integer
+_EMBED_COLOR = 0x000000
 
 # Shared client for connection reuse across webhook calls
 _http_client: httpx.AsyncClient | None = None

@@ -72,6 +72,7 @@ async def get_session_status(
         code_found=session.extracted_code is not None,
         completed=session.status == SessionStatus.extracted,
         device_name=session.device_name,
+        error_message=session.error_message,
     )
 
 

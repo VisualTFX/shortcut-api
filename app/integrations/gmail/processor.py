@@ -220,7 +220,7 @@ async def process_message(
     # Fire Discord notification after a code is successfully extracted
     if session and parse_result and parsed_code:
         await send_code_received_notification(
-            device_name=session.device_name or "Unknown Device",
+            device_name=session.device_name or "iPhone",
             alias_address=session.alias_address,
             code=parsed_code,
             session_id=session.public_id,
