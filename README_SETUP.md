@@ -144,6 +144,7 @@ The table below explains **every variable**. Variables marked **Must Change** ne
 | `RETENTION_REDACT_BODY` | `true` | Optional | When `RETENTION_ENABLED=true`, redact email body after code extraction. |
 | `RETENTION_DAYS` | `7` | Optional | How many days to keep retained messages. |
 | `RECYCLE_ENABLED` | `false` | Leave | Whether to allow alias reuse. Leave `false` to guarantee every alias is unique forever. |
+| `DISCORD_WEBHOOK_URL` | *(empty)* | Optional | Discord webhook URL for notifications when a verification code is received. Leave blank to disable. |
 | `HOST` | `0.0.0.0` | Leave | Binds to all network interfaces. Required when running behind a tunnel or reverse proxy. |
 | `PORT` | `8000` | Optional | Port the API listens on. |
 | `LOG_LEVEL` | `INFO` | Optional | Logging verbosity: `DEBUG`, `INFO`, `WARNING`, `ERROR`. |
@@ -186,6 +187,8 @@ RETENTION_REDACT_BODY=true
 RETENTION_DAYS=7
 
 RECYCLE_ENABLED=false
+
+DISCORD_WEBHOOK_URL=
 
 HOST=0.0.0.0
 PORT=8000

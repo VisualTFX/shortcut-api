@@ -13,6 +13,7 @@ class SessionCreate(BaseModel):
     domain: str | None = None
     alias_length: int | None = Field(None, ge=4, le=64)
     source_label: str | None = None
+    device_name: str | None = None
     metadata: dict[str, Any] | None = None
 
 
@@ -22,6 +23,7 @@ class SessionCreateResponse(BaseModel):
     alias: str
     expires_at: datetime
     status: SessionStatus
+    device_name: str | None = None
 
 
 class SessionStatusResponse(BaseModel):
@@ -32,6 +34,7 @@ class SessionStatusResponse(BaseModel):
     last_checked_at: datetime | None = None
     code_found: bool
     completed: bool
+    device_name: str | None = None
 
 
 class MessageSummary(BaseModel):

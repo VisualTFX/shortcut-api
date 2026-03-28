@@ -50,6 +50,9 @@ class Settings(BaseSettings):
     # ── Recycle ──────────────────────────────────────────
     recycle_enabled: bool = False
 
+    # ── Discord ──────────────────────────────────────────
+    discord_webhook_url: str | None = None
+
     # ── Server ───────────────────────────────────────────
     host: str = "0.0.0.0"
     port: int = 8000
