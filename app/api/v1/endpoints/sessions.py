@@ -76,7 +76,7 @@ async def get_session_status(
     )
 
 
-@router.get("/sessions/{session_id}/result", response_model=SessionResultResponse)
+@router.get("/sessions/{session_id}/result", response_model=SessionResultResponse, response_model_exclude_none=True)
 async def get_session_result(
     session_id: str,
     db: AsyncSession = Depends(get_db),

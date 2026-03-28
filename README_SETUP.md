@@ -731,7 +731,9 @@ Set the repeat count to `30`.
 | **Method** | `GET` |
 | **Headers** | Tap **Add new field** → Key: `X-Client-Token`, Value: `Client Token` (variable) |
 
-Tap the result bubble → **Add to Variable** → name it `Poll Response`.
+Tap the result bubble → tap **Set Variable** → name it `Poll Response`.
+
+> ⚠️ **Important:** Use **Set Variable**, not "Add to Variable". Inside a Repeat loop, "Add to Variable" appends each result to the variable, causing iOS to show a "Choose an Item" picker instead of using the latest response.
 
 #### 7b — Extract status from response
 
@@ -742,7 +744,7 @@ Tap the result bubble → **Add to Variable** → name it `Poll Response`.
 | **Key** | `status` |
 | **Dictionary** | `Poll Response` |
 
-Tap the result bubble → **Add to Variable** → name it `Poll Status`.
+Tap the result bubble → tap **Set Variable** → name it `Poll Status`.
 
 #### 7c — Check if code was extracted
 
@@ -758,7 +760,7 @@ Tap the result bubble → **Add to Variable** → name it `Poll Status`.
 
 1. **Action:** `Get Dictionary Value`
    - Key: `code`, Dictionary: `Poll Response`
-   - Result → **Add to Variable** → name it `Code`
+   - Result → tap **Set Variable** → name it `Code`
 
 2. **Action:** `Copy to Clipboard`
    - Input: `Code` (variable)
@@ -837,9 +839,9 @@ This action runs only if the code was not found within 30 × 5 = 150 seconds.
 | `Session ID` | Extracted from `Session Response` | UUID identifying the session |
 | `Client Token` | Extracted from `Session Response` | Bearer token for authenticating subsequent requests |
 | `Alias` | Extracted from `Session Response` | The generated email address to use for sign-up |
-| `Poll Response` | `GET .../result` result | Full JSON response from the polling request |
-| `Poll Status` | Extracted from `Poll Response` | Current session status: `waiting`, `extracted`, `expired`, `cancelled` |
-| `Code` | Extracted from `Poll Response` | The verification code (available when status is `extracted`) |
+| `Poll Response` | `GET .../result` result | Full JSON response from the polling request — **must use Set Variable** (not "Add to Variable") inside the Repeat loop |
+| `Poll Status` | Extracted from `Poll Response` | Current session status: `waiting`, `extracted`, `expired`, `cancelled` — **must use Set Variable** inside the Repeat loop |
+| `Code` | Extracted from `Poll Response` | The verification code (available when status is `extracted`) — **must use Set Variable** inside the Repeat loop |
 
 ---
 
@@ -875,6 +877,13 @@ Then add an **If** action checking whether the user tapped Cancel:
 ---
 
 ## Troubleshooting
+
+### "Choose an Item" picker appears during polling
+
+| Possible Cause | Fix |
+|---|---|
+| Variables inside the Repeat loop use "Add to Variable" instead of "Set Variable" | Open the Shortcut, find every variable assignment **inside the Repeat loop** (Poll Response, Poll Status, Code), and change each from "Add to Variable" to **"Set Variable"**. "Add to Variable" appends a new value on every loop iteration, so after several polls the variable contains multiple values and iOS asks you to pick one. |
+| API returns `null` fields that confuse Shortcuts | Update to the latest version of the API, which now excludes `null` fields from the polling response. |
 
 ### "No verification code was received"
 

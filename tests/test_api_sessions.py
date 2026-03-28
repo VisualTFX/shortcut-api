@@ -68,7 +68,7 @@ async def test_get_result_waiting(client: AsyncClient) -> None:
     assert resp.status_code == 200
     result = resp.json()
     assert result["status"] == "waiting"
-    assert result["code"] is None
+    assert "code" not in result
 
 
 @pytest.mark.asyncio

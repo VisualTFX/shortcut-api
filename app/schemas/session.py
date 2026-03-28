@@ -4,7 +4,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.verification_session import SessionStatus
 
@@ -46,6 +46,8 @@ class MessageSummary(BaseModel):
 
 
 class SessionResultResponse(BaseModel):
+    model_config = ConfigDict(exclude_none=True)
+
     session_id: str
     status: SessionStatus
     code: str | None = None
