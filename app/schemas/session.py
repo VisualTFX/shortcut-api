@@ -35,6 +35,7 @@ class SessionStatusResponse(BaseModel):
     code_found: bool
     completed: bool
     device_name: str | None = None
+    error_message: str | None = None
 
 
 class MessageSummary(BaseModel):

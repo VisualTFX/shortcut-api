@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     # ── Session ──────────────────────────────────────────
     session_ttl_seconds: int = 600
 
+    # ── Alias Timeout ─────────────────────────────────────
+    alias_timeout_minutes: int = 5
+
     # ── Database ─────────────────────────────────────────
     database_url: str = "sqlite+aiosqlite:///./shortcut_api.db"
 
