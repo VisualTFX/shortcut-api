@@ -141,6 +141,7 @@ The table below explains **every variable**. Variables marked **Must Change** ne
 | `ADMIN_TOKEN` | `change-me` | **Must Change** | Protects all `/api/v1/admin/*` endpoints. Generate a secure value — see below. |
 | `RATE_LIMIT_REQUESTS` | `30` | Optional | Maximum requests per window from a single IP. |
 | `RATE_LIMIT_WINDOW_SECONDS` | `60` | Optional | The sliding window for rate limiting (in seconds). |
+| `SECURITY_TOKEN_TTL_SECONDS` | `600` | Optional | How long a security token remains valid after creation (default: 10 minutes). The security token must be validated via `POST /api/v1/validate` before it can be used. |
 | `RETENTION_ENABLED` | `false` | Optional | If `true`, raw email bodies are stored in the database. |
 | `RETENTION_REDACT_BODY` | `true` | Optional | When `RETENTION_ENABLED=true`, redact email body after code extraction. |
 | `RETENTION_DAYS` | `7` | Optional | How many days to keep retained messages. |
@@ -605,17 +606,24 @@ Before making the API publicly accessible, verify every item below:
 The flow when using the Shortcut:
 
 ```
-1. Shortcut calls POST /api/v1/sessions
+0. Shortcut calls POST /api/v1/securitytoken
+   └─► API generates a one-time security token (TFX-iOS-xxxx)
+
+1. Shortcut calls POST /api/v1/validate  (header: X-Security-Token)
+   └─► API validates and approves the security token for use
+
+2. Shortcut calls POST /api/v1/sessions  (header: X-Security-Token)
    └─► API creates a session and returns a unique email alias
 
-2. Shortcut shows the alias to the user
+3. Shortcut shows the alias to the user
    └─► User copies the alias and pastes it into the sign-up form
 
-3. Shortcut polls GET /api/v1/sessions/{id}/result every 5 seconds
+4. Shortcut polls GET /api/v1/sessions/{id}/result every 5 seconds
+   (headers: X-Security-Token + X-Client-Token)
    └─► API is monitoring Gmail in the background
    └─► When an email arrives and a code is extracted, the result endpoint returns it
 
-4. Shortcut copies the code to clipboard and shows a notification
+5. Shortcut copies the code to clipboard and shows a notification
    └─► User pastes the code into the verification field
 ```
 
@@ -643,7 +651,47 @@ Tap the result bubble → tap **Add to Variable** → name the variable `Base UR
 
 ---
 
-### Action 2 — Create a session (POST /api/v1/sessions)
+### Action 2 — Get a security token (POST /api/v1/securitytoken)
+
+**Action:** `Get Contents of URL`
+
+| Field | Value |
+|---|---|
+| **URL** | Tap the URL field → tap **Variables** → select `Base URL` → then type `/api/v1/securitytoken` |
+| **Method** | `POST` |
+
+Tap the result bubble → tap **Add to Variable** → name the variable `Security Token Response`.
+
+---
+
+### Action 3 — Extract the security token
+
+**Action:** `Get Dictionary Value`
+
+| Field | Value |
+|---|---|
+| **Key** | `token` |
+| **Dictionary** | `Security Token Response` |
+
+Tap the result bubble → **Add to Variable** → name it `Security Token`.
+
+---
+
+### Action 4 — Validate the security token (POST /api/v1/validate)
+
+**Action:** `Get Contents of URL`
+
+| Field | Value |
+|---|---|
+| **URL** | Tap the URL field → tap **Variables** → select `Base URL` → then type `/api/v1/validate` |
+| **Method** | `POST` |
+| **Headers** | Tap **Add new field** → Key: `X-Security-Token`, Value: `Security Token` (variable) |
+
+> This step approves your security token. All subsequent session requests must include the same `X-Security-Token` header.
+
+---
+
+### Action 5 — Create a session (POST /api/v1/sessions)
 
 **Action:** `Get Contents of URL`
 
@@ -654,13 +702,14 @@ Configure it as follows:
 | **URL** | Tap the URL field → tap **Variables** → select `Base URL` → then type `/api/v1/sessions` |
 | **Method** | `POST` |
 | **Headers** | Tap **Add new field** → Key: `Content-Type`, Value: `application/json` |
+| **Headers** | Tap **Add new field** → Key: `X-Security-Token`, Value: `Security Token` (variable) |
 | **Request Body** | Select `JSON` → tap **Add new field** → Key: `source_label`, Value: `Shortcut` |
 
 Tap the result bubble → tap **Add to Variable** → name the variable `Session Response`.
 
 ---
 
-### Action 3 — Extract session_id
+### Action 6 — Extract session_id
 
 **Action:** `Get Dictionary Value`
 
@@ -673,7 +722,7 @@ Tap the result bubble → **Add to Variable** → name it `Session ID`.
 
 ---
 
-### Action 4 — Extract client_token
+### Action 7 — Extract client_token
 
 **Action:** `Get Dictionary Value`
 
@@ -686,7 +735,7 @@ Tap the result bubble → **Add to Variable** → name it `Client Token`.
 
 ---
 
-### Action 5 — Extract alias
+### Action 8 — Extract alias
 
 **Action:** `Get Dictionary Value`
 
@@ -699,7 +748,7 @@ Tap the result bubble → **Add to Variable** → name it `Alias`.
 
 ---
 
-### Action 6 — Show the alias to the user
+### Action 9 — Show the alias to the user
 
 **Action:** `Show Alert`
 
@@ -713,7 +762,7 @@ The user now sees the alias and can copy it to use in the sign-up form before ta
 
 ---
 
-### Action 7 — Polling loop (check for the code up to 30 times)
+### Action 10 — Polling loop (check for the code up to 30 times)
 
 **Action:** `Repeat`
 
@@ -721,7 +770,7 @@ Set the repeat count to `30`.
 
 **Inside the repeat loop, add these actions:**
 
-#### 7a — Poll the result endpoint
+#### 10a — Poll the result endpoint
 
 **Action:** `Get Contents of URL`
 
@@ -729,13 +778,14 @@ Set the repeat count to `30`.
 |---|---|
 | **URL** | `Base URL` + `/api/v1/sessions/` + `Session ID` + `/result` |
 | **Method** | `GET` |
+| **Headers** | Tap **Add new field** → Key: `X-Security-Token`, Value: `Security Token` (variable) |
 | **Headers** | Tap **Add new field** → Key: `X-Client-Token`, Value: `Client Token` (variable) |
 
 Tap the result bubble → tap **Set Variable** → name it `Poll Response`.
 
 > ⚠️ **Important:** Use **Set Variable**, not "Add to Variable". Inside a Repeat loop, "Add to Variable" appends each result to the variable, causing iOS to show a "Choose an Item" picker instead of using the latest response.
 
-#### 7b — Extract status from response
+#### 10b — Extract status from response
 
 **Action:** `Get Dictionary Value`
 
@@ -746,7 +796,7 @@ Tap the result bubble → tap **Set Variable** → name it `Poll Response`.
 
 Tap the result bubble → tap **Set Variable** → name it `Poll Status`.
 
-#### 7c — Check if code was extracted
+#### 10c — Check if code was extracted
 
 **Action:** `If`
 
@@ -773,7 +823,7 @@ Tap the result bubble → tap **Set Variable** → name it `Poll Status`.
 
 Tap **End If**.
 
-#### 7d — Check if session expired or cancelled
+#### 10d — Check if session expired or cancelled
 
 **Action:** `If`
 
@@ -795,7 +845,7 @@ Also add an **Otherwise** condition checking for `cancelled` — tap **Add Other
 
 Tap **End If**.
 
-#### 7e — Wait before the next poll
+#### 10e — Wait before the next poll
 
 **Action:** `Wait`
 
@@ -805,7 +855,7 @@ Tap **End If**.
 
 ---
 
-### Action 8 — Handle timeout (after the loop)
+### Action 11 — Handle timeout (after the loop)
 
 This action runs only if the code was not found within 30 × 5 = 150 seconds.
 
@@ -835,6 +885,8 @@ This action runs only if the code was not found within 30 × 5 = 150 seconds.
 | Variable Name | Source | Description |
 |---|---|---|
 | `Base URL` | Manual text action | Your API's public HTTPS URL |
+| `Security Token Response` | `POST /api/v1/securitytoken` result | Full JSON response from security token creation |
+| `Security Token` | Extracted from `Security Token Response` | One-time token (`TFX-iOS-xxxx`) — must be validated before use; passed as `X-Security-Token` header on all subsequent requests |
 | `Session Response` | `POST /api/v1/sessions` result | Full JSON response from session creation |
 | `Session ID` | Extracted from `Session Response` | UUID identifying the session |
 | `Client Token` | Extracted from `Session Response` | Bearer token for authenticating subsequent requests |
@@ -849,7 +901,7 @@ This action runs only if the code was not found within 30 × 5 = 150 seconds.
 
 You can allow users to cancel the wait early by adding a cancel button.
 
-After **Action 6** (Show Alert showing the alias), add:
+After **Action 9** (Show Alert showing the alias), add:
 
 **Action:** `Show Alert`
 
@@ -866,7 +918,7 @@ Then add an **If** action checking whether the user tapped Cancel:
   1. **Action:** `Get Contents of URL`
      - URL: `Base URL` + `/api/v1/sessions/` + `Session ID` + `/cancel`
      - Method: `POST`
-     - Headers: `X-Client-Token: Client Token`
+     - Headers: `X-Security-Token: Security Token`, `X-Client-Token: Client Token`
 
   2. **Action:** `Show Alert` → "Session cancelled."
 
@@ -877,6 +929,15 @@ Then add an **If** action checking whether the user tapped Cancel:
 ---
 
 ## Troubleshooting
+
+### "400 Bad Request" from session endpoints
+
+| Possible Cause | Fix |
+|---|---|
+| `X-Security-Token` header is missing | Ensure every session request (create, status, result, cancel) includes the `X-Security-Token` header with the token obtained from `POST /api/v1/securitytoken`. |
+| Security token has not been validated | Call `POST /api/v1/validate` with the `X-Security-Token` header **before** using the token on any session endpoint. |
+| Security token has expired | Security tokens expire after `SECURITY_TOKEN_TTL_SECONDS` (default: 10 minutes). Re-run Actions 2–4 in the Shortcut to obtain and validate a fresh token. |
+| Security token was already validated previously | Each security token can only be validated once. If validation fails with "already validated", the token is still usable for session requests — you only need to call `/validate` once per token. |
 
 ### "Choose an Item" picker appears during polling
 
@@ -949,11 +1010,45 @@ curl http://localhost:8000/health
 # Expected: {"status": "ok"}
 ```
 
-### 3. Create a test session
+### 3. Get and validate a security token
+
+```powershell
+# Step 3a — create a security token
+curl -X POST http://localhost:8000/api/v1/securitytoken
+```
+
+Expected response:
+
+```json
+{
+  "token": "TFX-iOS-a8Kx9mN2p4qR7sT1uV3wY5zA0bC2dE4f",
+  "expires_at": "2024-01-01T12:10:00Z"
+}
+```
+
+Save the `token` value. Then validate it:
+
+```powershell
+# Step 3b — validate the token (replace with your actual token)
+curl -X POST http://localhost:8000/api/v1/validate `
+  -H "X-Security-Token: TFX-iOS-a8Kx9mN2p4qR7sT1uV3wY5zA0bC2dE4f"
+```
+
+Expected response:
+
+```json
+{
+  "validated": true,
+  "message": "Security token validated successfully"
+}
+```
+
+### 4. Create a test session
 
 ```powershell
 curl -X POST http://localhost:8000/api/v1/sessions `
   -H "Content-Type: application/json" `
+  -H "X-Security-Token: TFX-iOS-a8Kx9mN2p4qR7sT1uV3wY5zA0bC2dE4f" `
   -d '{"source_label": "test"}'
 ```
 
@@ -971,23 +1066,25 @@ Expected response:
 
 Save the `session_id`, `client_token`, and `alias` values.
 
-### 4. Send an email to the alias
+### 5. Send an email to the alias
 
 Send an email to the `alias` address returned in step 3. You can use any service that sends a verification code (or send a test email manually).
 
 If you are testing without a real service, send an email directly to the alias from any email account. The email body should contain a number that matches your parsing rules (e.g. a 6-digit code).
 
-### 5. Check the session status
+### 6. Check the session status
 
 ```powershell
 curl http://localhost:8000/api/v1/sessions/abc123def456/status `
+  -H "X-Security-Token: TFX-iOS-a8Kx9mN2p4qR7sT1uV3wY5zA0bC2dE4f" `
   -H "X-Client-Token: raw-token-shown-once"
 ```
 
-### 6. Poll for the result
+### 7. Poll for the result
 
 ```powershell
 curl http://localhost:8000/api/v1/sessions/abc123def456/result `
+  -H "X-Security-Token: TFX-iOS-a8Kx9mN2p4qR7sT1uV3wY5zA0bC2dE4f" `
   -H "X-Client-Token: raw-token-shown-once"
 ```
 
@@ -1009,7 +1106,7 @@ When the code is found, the response will include:
 
 If `status` is still `waiting`, the Gmail worker has not yet polled. Wait up to `GMAIL_POLL_INTERVAL_SECONDS` (default 10 seconds) and try again.
 
-### 7. Confirm the code in the API logs
+### 8. Confirm the code in the API logs
 
 The server terminal should show log lines similar to:
 
