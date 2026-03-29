@@ -1,10 +1,11 @@
 """API v1 router."""
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import admin, health, sessions
+from app.api.v1.endpoints import admin, health, security, sessions
 
 router = APIRouter(prefix="/api/v1")
 router.include_router(sessions.router, tags=["sessions"])
+router.include_router(security.router, tags=["security"])
 router.include_router(admin.router, prefix="/admin", tags=["admin"])
 
 health_router = APIRouter()

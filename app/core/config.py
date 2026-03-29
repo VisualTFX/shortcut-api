@@ -44,6 +44,7 @@ class Settings(BaseSettings):
     admin_token: str = "change-me"
     rate_limit_requests: int = 30
     rate_limit_window_seconds: int = 60
+    security_token_ttl_seconds: int = 600
 
     # ── Retention ────────────────────────────────────────
     retention_enabled: bool = False

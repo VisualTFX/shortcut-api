@@ -3,3 +3,4 @@ from app.models.alias import Alias, AliasStatus  # noqa: F401
 from app.models.verification_session import VerificationSession, SessionStatus  # noqa: F401
 from app.models.incoming_message import IncomingMessage  # noqa: F401
 from app.models.parsing_rule import ParsingRule  # noqa: F401
+from app.models.security_token import SecurityToken  # noqa: F401
