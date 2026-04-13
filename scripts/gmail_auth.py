@@ -33,8 +33,11 @@ def main() -> None:
     print(f"Scopes: {SCOPES}")
     try:
         creds = get_credentials()
-        print(f"Authentication successful!")
-        print(f"Token stored. Expiry: {creds.expiry}")
+        print("Authentication successful!")
+        print(
+            "Token stored successfully. The access token refreshes automatically — "
+            "you do not need to re-run this script unless you revoke access or delete token.json."
+        )
     except FileNotFoundError as exc:
         print(f"\nError: {exc}")
         print(
@@ -42,7 +45,7 @@ def main() -> None:
             "1. Go to https://console.cloud.google.com/\n"
             "2. Create a project and enable the Gmail API\n"
             "3. Create OAuth 2.0 Desktop client credentials\n"
-            "4. Download the JSON and save as credentials.json in your project root\n"
+            "4. Download the JSON and save as credentials.json in the project root (same folder as .env)\n"
             "5. Re-run this script\n"
         )
         sys.exit(1)
